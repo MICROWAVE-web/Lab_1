@@ -91,3 +91,84 @@ Librarian createLibrarian(int id, const char* name, const char* position) {
 }
 
 
+void inputAuthor(Author* author) {
+    printf("Enter Author ID: ");
+    scanf("%d", &author->id);
+    printf("Enter Author Name: ");
+    scanf(" %[^\n]", author->name);
+    printf("Enter Author Nationality: ");
+    scanf(" %[^\n]", author->nationality);
+}
+
+void printAuthor(Author author) {
+    printf("Author ID: %d\nName: %s\nNationality: %s\n", author.id, author.name, author.nationality);
+}
+
+void inputBook(Book* book) {
+    printf("Enter Book ID: ");
+    scanf("%d", &book->id);
+    printf("Enter Book Title: ");
+    scanf(" %[^\n]", book->title);
+    printf("Enter Author details:\n");
+    inputAuthor(&book->author);
+    printf("Enter Year of Publication: ");
+    scanf("%d", &book->year);
+}
+
+
+
+void printBook(Book book) {
+    printf("Book ID: %d\nTitle: %s\n", book.id, book.title);
+    printAuthor(book.author);
+    printf("Year: %d\n", book.year);
+}
+
+void inputReader(Reader* reader) {
+    printf("Enter Reader ID: ");
+    scanf("%d", &reader->id);
+    printf("Enter Reader Name: ");
+    scanf(" %[^\n]", reader->name);
+    printf("Enter Reader Address: ");
+    scanf(" %[^\n]", reader->address);
+}
+
+void printReader(Reader reader) {
+    printf("Reader ID: %d\nName: %s\nAddress: %s\n", reader.id, reader.name, reader.address);
+}
+
+void inputOrder(Order* order) {
+    printf("Enter Order ID: ");
+    scanf("%d", &order->id);
+    printf("Enter Book details:\n");
+    inputBook(&order->book);
+    printf("Enter Reader details:\n");
+    inputReader(&order->reader);
+    printf("Enter Librarian details:\n");
+    inputLibrarian(&order->librarian);
+    printf("Enter Order Date (YYYY-MM-DD): ");
+    scanf(" %[^\n]", order->order_date);
+}
+
+void printOrder(Order order) {
+    printf("Order ID: %d\n", order.id);
+    printBook(order.book);
+    printReader(order.reader);
+    printLibrarian(order.librarian);
+    printf("Order Date: %s\n", order.order_date);
+}
+
+
+
+void inputLibrarian(Librarian* librarian) {
+    printf("Enter Librarian ID: ");
+    scanf("%d", &librarian->id);
+    printf("Enter Librarian Name: ");
+    scanf(" %[^\n]", librarian->name);
+    printf("Enter Librarian Position: ");
+    scanf(" %[^\n]", librarian->position);
+}
+void printLibrarian(Librarian librarian) {
+    printf("Librarian ID: %d\nName: %s\nPosition: %s\n", librarian.id, librarian.name, librarian.position);
+}
+
+
