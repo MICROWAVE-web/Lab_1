@@ -41,3 +41,53 @@ typedef struct {
     char position[50];
 } Librarian;
 
+// Инициализация автора
+Author createAuthor(int id, const char* name, const char* nationality) {
+    Author author;
+    author.id = id;
+    strcpy(author.name, name);
+    strcpy(author.nationality, nationality);
+    return author;
+}
+
+// Инициализация книги
+Book createBook(int id, const char* title, Author author, int year) {
+    Book book;
+    book.id = id;
+    strcpy(book.title, title);
+    book.author = author;
+    book.year = year;
+    return book;
+}
+
+// Инициализация читателя
+Reader createReader(int id, const char* name, const char* address) {
+    Reader reader;
+    reader.id = id;
+    strcpy(reader.name, name);
+    strcpy(reader.address, address);
+    return reader;
+}
+
+// Инициализация Заказа
+Order createOrder(int id, Book book, Reader reader, Librarian librarian
+        , const char* order_date) {
+    Order order;
+    order.id = id;
+    order.book = book;
+    order.reader = reader;
+    order.librarian = librarian;
+    strcpy(order.order_date, order_date);
+    return order;
+}
+
+// Инициализация библиотекаря
+Librarian createLibrarian(int id, const char* name, const char* position) {
+    Librarian librarian;
+    librarian.id = id;
+    strcpy(librarian.name, name);
+    strcpy(librarian.position, position);
+    return librarian;
+}
+
+
