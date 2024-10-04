@@ -178,3 +178,53 @@ void sendBook(Order* order) {
 void returnBook(Order* order) {
     printf("Returning book '%s' from reader '%s'\n", order->book.title, order->reader.name);
 }
+
+int main() {
+    // Создание авторов
+    Author author1 = createAuthor(1, "Л. Н. Толстой.", "Русский");
+    Author author2 = createAuthor(2, "Харуки Мураками", "Японец");
+
+    // Создание книг
+    Book book1 = createBook(1, "Война и мир", author1, 1869);
+    Book book2 = createBook(2, "Токийские легенды", author2, 2005);
+
+    // Создание читателей
+    Reader reader1 = createReader(1, "Антон", "г. Барнаул, ул. Попова, дом 16");
+    Reader reader2 = createReader(2, "Никита", "г. Новосибирск, ул. Фрунзе, дом 52");
+
+    // Создание библиотекаря
+    Librarian librarian = createLibrarian(1, "Анна Николаевна", "Заместитель дироектора");
+
+
+
+    // Создание заказов
+    Order order1 = createOrder(1, book1, reader1, librarian, "2024-10-01");
+    Order order2 = createOrder(2, book2, reader2, librarian, "2024-09-30");
+
+    // Ввод данных
+    Author newAuthor;
+    inputAuthor(&newAuthor);
+    printAuthor(newAuthor);
+
+    Book newBook;
+    inputBook(&newBook);
+    printBook(newBook);
+
+    Reader newReader;
+    inputReader(&newReader);
+    printReader(newReader);
+
+    Librarian newLibrarian;
+    inputLibrarian(&newLibrarian);
+    printLibrarian(newLibrarian);
+
+    Order newOrder;
+    inputOrder(&newOrder);
+    printOrder(newOrder);
+
+    // Бизнес-логика
+    sendBook(&order1);
+    returnBook(&order1);
+
+    return 0;
+}
