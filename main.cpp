@@ -1,230 +1,249 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <iostream>
+#include <string>
+#include <utility>
 
-// Структура для представления автора
-typedef struct {
+class Author {
+private:
     int id;
-    char name[100];
-    char nationality[50];
-} Author;
+    std::string name;
+    std::string nationality;
 
-// Структура для представления книги
-typedef struct {
+public:
+    Author(): id(0), name(""), nationality("") {}
+
+    Author(int id, std::string name, std::string nationality)
+            : id(id), name(std::move(name)), nationality(std::move(nationality)) {}
+
+    static void inputAuthor(Author &author) {
+        std::cout << "Enter Author ID: ";
+        std::cin >> author.id;
+        std::cin.ignore();
+        std::cout << "Enter Author Name: ";
+        std::getline(std::cin, author.name);
+        std::cout << "Enter Author Nationality: ";
+        std::getline(std::cin, author.nationality);
+    }
+
+    void printAuthor() const {
+        std::cout << "Author ID: " << id << "\nName: " << name << "\nNationality: " << nationality << std::endl;
+    }
+};
+
+class Book {
+private:
     int id;
-    char title[100];
+    std::string title;
     Author author;
     int year;
-} Book;
 
-// Структура для представления читателя
-typedef struct {
+public:
+    // Default constructor
+    Book() : id(0), title(""), author(), year(0) {}
+
+    // Parameterized constructor
+    Book(int id, std::string title, Author author, int year)
+            : id(id), title(std::move(title)), author(std::move(author)), year(year) {}
+
+    static void inputBook(Book &book) {
+        std::cout << "Enter Book ID: ";
+        std::cin >> book.id;
+        std::cin.ignore();
+        std::cout << "Enter Book Title: ";
+        std::getline(std::cin, book.title);
+        std::cout << "Enter Author details:\n";
+        Author::inputAuthor(book.author);
+        std::cout << "Enter Year of Publication: ";
+        std::cin >> book.year;
+    }
+
+    void printBook() const {
+        std::cout << "Book ID: " << id << "\nTitle: " << title << std::endl;
+        author.printAuthor();
+        std::cout << "Year: " << year << std::endl;
+    }
+
+    std::string getTitle() const {
+        return title;
+    }
+};
+
+
+class Reader {
+private:
     int id;
-    char name[100];
-    char address[200];
-} Reader;
+    std::string name;
+    std::string address;
 
+public:
+    Reader(int id, std::string name, std::string address)
+            : id(id), name(std::move(name)), address(std::move(address)) {}
 
-// Структура для представления заказа
-typedef struct {
+    static void inputReader(Reader &reader) {
+        std::cout << "Enter Reader ID: ";
+        std::cin >> reader.id;
+        std::cin.ignore();
+        std::cout << "Enter Reader Name: ";
+        std::getline(std::cin, reader.name);
+        std::cout << "Enter Reader Address: ";
+        std::getline(std::cin, reader.address);
+    }
+
+    void printReader() const {
+        std::cout << "Reader ID: " << id << "\nName: " << name << "\nAddress: " << address << std::endl;
+    }
+
+    std::string getName() const {
+        return name;
+    }
+};
+
+class Librarian {
+private:
+    int id;
+    std::string name;
+    std::string position;
+
+public:
+    Librarian(int id, std::string name, std::string position)
+            : id(id), name(std::move(name)), position(std::move(position)) {}
+
+    static void inputLibrarian(Librarian &librarian) {
+        std::cout << "Enter Librarian ID: ";
+        std::cin >> librarian.id;
+        std::cin.ignore();
+        std::cout << "Enter Librarian Name: ";
+        std::getline(std::cin, librarian.name);
+        std::cout << "Enter Librarian Position: ";
+        std::getline(std::cin, librarian.position);
+    }
+
+    void printLibrarian() const {
+        std::cout << "Librarian ID: " << id << "\nName: " << name << "\nPosition: " << position << std::endl;
+    }
+};
+
+class Order {
+private:
     int id;
     Book book;
     Reader reader;
     Librarian librarian;
-    char order_date[11]; // формат: YYYY-MM-DD
-} Order;
+    std::string order_date;
 
-// Структура для представления библиотекаря
-typedef struct {
-    int id;
-    char name[100];
-    char position[50];
-} Librarian;
+public:
+    Order(int id, Book book, Reader reader, Librarian librarian, std::string order_date)
+            : id(id), book(std::move(book)), reader(std::move(reader)), librarian(std::move(librarian)),
+              order_date(std::move(order_date)) {}
 
-// Инициализация автора
-Author createAuthor(int id, const char* name, const char* nationality) {
-    Author author;
-    author.id = id;
-    strcpy(author.name, name);
-    strcpy(author.nationality, nationality);
-    return author;
-}
+    static void inputOrder(Order &order) {
+        std::cout << "Enter Order ID: ";
+        std::cin >> order.id;
+        std::cin.ignore();
+        std::cout << "Enter Book details:\n";
+        Book::inputBook(order.book);
+        std::cout << "Enter Reader details:\n";
+        Reader::inputReader(order.reader);
+        std::cout << "Enter Librarian details:\n";
+        Librarian::inputLibrarian(order.librarian);
+        std::cout << "Enter Order Date (YYYY-MM-DD): ";
+        std::getline(std::cin, order.order_date);
+    }
 
-// Инициализация книги
-Book createBook(int id, const char* title, Author author, int year) {
-    Book book;
-    book.id = id;
-    strcpy(book.title, title);
-    book.author = author;
-    book.year = year;
-    return book;
-}
+    void printOrder() const {
+        std::cout << "Order ID: " << id << std::endl;
+        book.printBook();
+        reader.printReader();
+        librarian.printLibrarian();
+        std::cout << "Order Date: " << order_date << std::endl;
+    }
 
-// Инициализация читателя
-Reader createReader(int id, const char* name, const char* address) {
-    Reader reader;
-    reader.id = id;
-    strcpy(reader.name, name);
-    strcpy(reader.address, address);
-    return reader;
-}
+    void sendBook() const {
+        std::cout << "Sending book '" << book.getTitle() << "' to reader '" << reader.getName() << "' on " << order_date
+                  << std::endl;
+    }
 
-// Инициализация Заказа
-Order createOrder(int id, Book book, Reader reader, Librarian librarian
-        , const char* order_date) {
-    Order order;
-    order.id = id;
-    order.book = book;
-    order.reader = reader;
-    order.librarian = librarian;
-    strcpy(order.order_date, order_date);
-    return order;
-}
-
-// Инициализация библиотекаря
-Librarian createLibrarian(int id, const char* name, const char* position) {
-    Librarian librarian;
-    librarian.id = id;
-    strcpy(librarian.name, name);
-    strcpy(librarian.position, position);
-    return librarian;
-}
-
-
-void inputAuthor(Author* author) {
-    printf("Enter Author ID: ");
-    scanf("%d", &author->id);
-    printf("Enter Author Name: ");
-    scanf(" %[^\n]", author->name);
-    printf("Enter Author Nationality: ");
-    scanf(" %[^\n]", author->nationality);
-}
-
-void printAuthor(Author author) {
-    printf("Author ID: %d\nName: %s\nNationality: %s\n", author.id, author.name, author.nationality);
-}
-
-void inputBook(Book* book) {
-    printf("Enter Book ID: ");
-    scanf("%d", &book->id);
-    printf("Enter Book Title: ");
-    scanf(" %[^\n]", book->title);
-    printf("Enter Author details:\n");
-    inputAuthor(&book->author);
-    printf("Enter Year of Publication: ");
-    scanf("%d", &book->year);
-}
-
-
-
-void printBook(Book book) {
-    printf("Book ID: %d\nTitle: %s\n", book.id, book.title);
-    printAuthor(book.author);
-    printf("Year: %d\n", book.year);
-}
-
-void inputReader(Reader* reader) {
-    printf("Enter Reader ID: ");
-    scanf("%d", &reader->id);
-    printf("Enter Reader Name: ");
-    scanf(" %[^\n]", reader->name);
-    printf("Enter Reader Address: ");
-    scanf(" %[^\n]", reader->address);
-}
-
-void printReader(Reader reader) {
-    printf("Reader ID: %d\nName: %s\nAddress: %s\n", reader.id, reader.name, reader.address);
-}
-
-void inputOrder(Order* order) {
-    printf("Enter Order ID: ");
-    scanf("%d", &order->id);
-    printf("Enter Book details:\n");
-    inputBook(&order->book);
-    printf("Enter Reader details:\n");
-    inputReader(&order->reader);
-    printf("Enter Librarian details:\n");
-    inputLibrarian(&order->librarian);
-    printf("Enter Order Date (YYYY-MM-DD): ");
-    scanf(" %[^\n]", order->order_date);
-}
-
-void printOrder(Order order) {
-    printf("Order ID: %d\n", order.id);
-    printBook(order.book);
-    printReader(order.reader);
-    printLibrarian(order.librarian);
-    printf("Order Date: %s\n", order.order_date);
-}
-
-
-
-void inputLibrarian(Librarian* librarian) {
-    printf("Enter Librarian ID: ");
-    scanf("%d", &librarian->id);
-    printf("Enter Librarian Name: ");
-    scanf(" %[^\n]", librarian->name);
-    printf("Enter Librarian Position: ");
-    scanf(" %[^\n]", librarian->position);
-}
-void printLibrarian(Librarian librarian) {
-    printf("Librarian ID: %d\nName: %s\nPosition: %s\n", librarian.id, librarian.name, librarian.position);
-}
-
-void sendBook(Order* order) {
-    printf("Sending book '%s' to reader '%s' on %s\n", order->book.title, order->reader.name, order->order_date);
-}
-
-void returnBook(Order* order) {
-    printf("Returning book '%s' from reader '%s'\n", order->book.title, order->reader.name);
-}
+    void returnBook() const {
+        std::cout << "Returning book '" << book.getTitle() << "' from reader '" << reader.getName() << "'" << std::endl;
+    }
+};
 
 int main() {
     // Создание авторов
-    Author author1 = createAuthor(1, "Л. Н. Толстой.", "Русский");
-    Author author2 = createAuthor(2, "Харуки Мураками", "Японец");
+    Author author1(1, "Л. Н. Толстой.", "Русский");
+    Author author2(2, "Харуки Мураками", "Японец");
 
     // Создание книг
-    Book book1 = createBook(1, "Война и мир", author1, 1869);
-    Book book2 = createBook(2, "Токийские легенды", author2, 2005);
+    Book book1(1, "Война и мир", author1, 1869);
+    Book book2(2, "Токийские легенды", author2, 2005);
 
     // Создание читателей
-    Reader reader1 = createReader(1, "Антон", "г. Барнаул, ул. Попова, дом 16");
-    Reader reader2 = createReader(2, "Никита", "г. Новосибирск, ул. Фрунзе, дом 52");
+    Reader reader1(1, "Антон", "г. Барнаул, ул. Попова, дом 16");
+    Reader reader2(2, "Никита", "г. Новосибирск, ул. Фрунзе, дом 52");
 
     // Создание библиотекаря
-    Librarian librarian = createLibrarian(1, "Анна Николаевна", "Заместитель дироектора");
-
+    Librarian librarian(1, "Анна Николаевна", "Заместитель дироектора");
 
 
     // Создание заказов
-    Order order1 = createOrder(1, book1, reader1, librarian, "2024-10-01");
-    Order order2 = createOrder(2, book2, reader2, librarian, "2024-09-30");
+    Order order1(1, book1, reader1, librarian, "2024-10-01");
+    Order order2(2, book2, reader2, librarian, "2024-09-30");
 
     // Ввод данных
-    Author newAuthor;
-    inputAuthor(&newAuthor);
-    printAuthor(newAuthor);
+    Author newAuthor(0, "", "");
+    Author::inputAuthor(newAuthor);
+    newAuthor.printAuthor();
 
-    Book newBook;
-    inputBook(&newBook);
-    printBook(newBook);
+    Book newBook(0, "", newAuthor, 0);
+    Book::inputBook(newBook);
+    newBook.printBook();
 
-    Reader newReader;
-    inputReader(&newReader);
-    printReader(newReader);
+    Reader newReader(0, "", "");
+    Reader::inputReader(newReader);
+    newReader.printReader();
 
-    Librarian newLibrarian;
-    inputLibrarian(&newLibrarian);
-    printLibrarian(newLibrarian);
+    Librarian newLibrarian(0, "", "");
+    Librarian::inputLibrarian(newLibrarian);
+    newLibrarian.printLibrarian();
 
-    Order newOrder;
-    inputOrder(&newOrder);
-    printOrder(newOrder);
+    Order newOrder(0, newBook, newReader, newLibrarian, "");
+    Order::inputOrder(newOrder);
+    newOrder.printOrder();
 
     // Бизнес-логика
-    sendBook(&order1);
-    returnBook(&order1);
+    order1.sendBook();
+    order1.returnBook();
+
+// Работа с динамическим массивом объектов класса
+    int numBooks = 3;
+    Book *books = new Book[numBooks]{
+            Book{3, "Гранатовый браслет", Author(3, "Александр Куприн", "Русский"),       1910},
+            Book{4, "Заячьи лапы",        Author(4, "Константин Паустовский", "Русский"), 1937},
+            Book{5, "Предания веков",     Author(5, "Николай Карамзин", "Русский"),       1988}
+    };
+
+    std::cout << "\nДинамический список объектов:\n";
+    for (int i = 0; i < numBooks; ++i) {
+        books[i].printBook();
+    }
+
+    delete[] books;
+
+// Работа с массивом динамических объектов класса
+    int numReaders = 2;
+    auto **readers = new Reader *[numReaders];
+    readers[0] = new Reader(3, "Алёша", "г. Барнаул, ул. Чкалова, дом 3");
+    readers[1] = new Reader(4, "Кирилл", "г. Тула, ул. Гололя, дом 6");
+
+    std::cout << "\nСписок Динамических объектов:\n";
+    for (int i = 0; i < numReaders; ++i) {
+        readers[i]->printReader();
+    }
+
+    for (int i = 0; i < numReaders; ++i) {
+        delete readers[i];
+    }
+    delete[] readers;
+
 
     return 0;
 }
