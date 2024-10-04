@@ -171,4 +171,10 @@ void printLibrarian(Librarian librarian) {
     printf("Librarian ID: %d\nName: %s\nPosition: %s\n", librarian.id, librarian.name, librarian.position);
 }
 
+void sendBook(Order* order) {
+    printf("Sending book '%s' to reader '%s' on %s\n", order->book.title, order->reader.name, order->order_date);
+}
 
+void returnBook(Order* order) {
+    printf("Returning book '%s' from reader '%s'\n", order->book.title, order->reader.name);
+}
