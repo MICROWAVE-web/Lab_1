@@ -1,16 +1,18 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <windows.h>
 
 class Author {
 private:
     int id;
-    std::string name;
     std::string nationality;
     static int authorCount; // Статическое поле для подсчета авторов
 
 public:
-    Author(): id(0), name(""), nationality("") {
+    std::string name; // Сделаем поле name публичным
+
+    Author() : id(0), name(""), nationality("") {
         authorCount++;
     }
 
@@ -36,6 +38,13 @@ public:
     static int getAuthorCount() { // Статический метод для получения количества авторов
         return authorCount;
     }
+
+    Author &setName(const std::string &newName) { // Метод задания имени с использованием указателя
+        this->name = newName;
+        return *this;
+    }
+
+
 };
 
 // Инициализация статического поля
@@ -49,10 +58,42 @@ private:
     int year;
 
 public:
-    // Default constructor
+    // Перегрузка оператора + для сложения название 2 книг
+    Book operator+(const Book &other) const {
+        Book combined;
+        combined.title = this->title + " & " + other.title; // 5) сложение двух строк std::string
+        combined.author = this->author;  // Оставляем автора 1 книги
+        combined.year = this->year + other.year; // Оставляем год выпуска 1 книги
+        return combined;
+    }
+
+    // Префиксная перегрузка оператора ++
+    Book &operator++() {
+        ++year;
+        return *this;
+    }
+
+    // Постфиксной перегрузка оператора ++
+    Book operator++(int) {
+        Book temp = *this;
+        year++;
+        return temp;
+    }
+
+    // метод возврата через указатель
+    std::string *getTitlePointer() {
+        return &title;
+    }
+
+    // метод возврата через ссылку
+    std::string &getTitleReference() {
+        return title;
+    }
+
+    // Обычный конструктор
     Book() : id(0), title(""), author(), year(0) {}
 
-    // Parameterized constructor
+    // Обычный с параметрами
     Book(int id, std::string title, Author author, int year)
             : id(id), title(std::move(title)), author(std::move(author)), year(year) {}
 
@@ -77,8 +118,13 @@ public:
     std::string getTitle() const {
         return title;
     }
+
+    friend bool sameAuthor(const Book &b1, const Book &b2); // Вызов дружественной функции
 };
 
+bool sameAuthor(const Book &b1, const Book &b2) { // Дружественная функция для сопоставления авторов 2 книг
+    return b1.author.name == b2.author.name;
+}
 
 class Reader {
 private:
@@ -180,86 +226,36 @@ public:
 };
 
 int main() {
-    std::cout << "Total Authors: " << Author::getAuthorCount() << std::endl;
+    setlocale(LC_ALL, "ru-RU");
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
 
-    // Создание авторов
-    Author author1(1, "Л. Н. Толстой.", "Русский");
-    Author author2(2, "Харуки Мураками", "Японец");
+    // 1) Демонстрация возвращения через указатель и через ссылку
+    Book book1(1, "C++ Основы", Author(1, "John Doe", "США"), 2020);
+    std::string *titlePtr = book1.getTitlePointer();
+    std::string &titleRef = book1.getTitleReference();
+    std::cout << "Title (pointer): " << *titlePtr << "\nTitle (reference): " << titleRef << std::endl;
 
-    std::cout << "Total Authors: " << Author::getAuthorCount() << std::endl;
+    // 2) Демонстрация использования оператора this
+    Author author1;
+    author1.setName("Jane Doe").setName("Jane Austen");
+    author1.printAuthor();
 
-    // Создание книг
-    Book book1(1, "Война и мир", author1, 1869);
-    Book book2(2, "Токийские легенды", author2, 2005);
+    // 3) Сравнение автора 2 книг
+    Book book2(2, "Продвинутый C++", Author(2, "John Doe", "США"), 2021);
+    std::cout << "Same author: " << (sameAuthor(book1, book2) ? "Yes" : "No") << std::endl;
 
-    // Создание читателей
-    Reader reader1(1, "Антон", "г. Барнаул, ул. Попова, дом 16");
-    Reader reader2(2, "Никита", "г. Новосибирск, ул. Фрунзе, дом 52");
+    // 4) Демонстрация сложения 2 книг
+    Book combinedBook = book1 + book2;
+    combinedBook.printBook();
 
-    // Создание библиотекаря
-    Librarian librarian(1, "Анна Николаевна", "Заместитель дироектора");
+    // Префиксный оператор увеличения ++
+    ++book1;
+    book1.printBook();
 
-
-    // Создание заказов
-    Order order1(1, book1, reader1, librarian, "2024-10-01");
-    Order order2(2, book2, reader2, librarian, "2024-09-30");
-
-    // Ввод данных
-    Author newAuthor(0, "", "");
-    Author::inputAuthor(newAuthor);
-    newAuthor.printAuthor();
-
-    Book newBook(0, "", newAuthor, 0);
-    Book::inputBook(newBook);
-    newBook.printBook();
-
-    Reader newReader(0, "", "");
-    Reader::inputReader(newReader);
-    newReader.printReader();
-
-    Librarian newLibrarian(0, "", "");
-    Librarian::inputLibrarian(newLibrarian);
-    newLibrarian.printLibrarian();
-
-    Order newOrder(0, newBook, newReader, newLibrarian, "");
-    Order::inputOrder(newOrder);
-    newOrder.printOrder();
-
-    // Бизнес-логика
-    order1.sendBook();
-    order1.returnBook();
-
-// Работа с динамическим массивом объектов класса
-    int numBooks = 3;
-    Book *books = new Book[numBooks]{
-            Book{3, "Гранатовый браслет", Author(3, "Александр Куприн", "Русский"),       1910},
-            Book{4, "Заячьи лапы",        Author(4, "Константин Паустовский", "Русский"), 1937},
-            Book{5, "Предания веков",     Author(5, "Николай Карамзин", "Русский"),       1988}
-    };
-
-    std::cout << "\nДинамический список объектов:\n";
-    for (int i = 0; i < numBooks; ++i) {
-        books[i].printBook();
-    }
-
-    delete[] books;
-
-// Работа с массивом динамических объектов класса
-    int numReaders = 2;
-    auto **readers = new Reader *[numReaders];
-    readers[0] = new Reader(3, "Алёша", "г. Барнаул, ул. Чкалова, дом 3");
-    readers[1] = new Reader(4, "Кирилл", "г. Тула, ул. Гололя, дом 6");
-
-    std::cout << "\nСписок Динамических объектов:\n";
-    for (int i = 0; i < numReaders; ++i) {
-        readers[i]->printReader();
-    }
-
-    for (int i = 0; i < numReaders; ++i) {
-        delete readers[i];
-    }
-    delete[] readers;
-
+    // Постфиксный оператор увеличения ++
+    book1++;
+    book1.printBook();
 
     return 0;
 }
