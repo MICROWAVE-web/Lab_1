@@ -7,12 +7,17 @@ private:
     int id;
     std::string name;
     std::string nationality;
+    static int authorCount; // Статическое поле для подсчета авторов
 
 public:
-    Author(): id(0), name(""), nationality("") {}
+    Author(): id(0), name(""), nationality("") {
+        authorCount++;
+    }
 
     Author(int id, std::string name, std::string nationality)
-            : id(id), name(std::move(name)), nationality(std::move(nationality)) {}
+            : id(id), name(std::move(name)), nationality(std::move(nationality)) {
+        authorCount++;
+    }
 
     static void inputAuthor(Author &author) {
         std::cout << "Enter Author ID: ";
@@ -27,7 +32,14 @@ public:
     void printAuthor() const {
         std::cout << "Author ID: " << id << "\nName: " << name << "\nNationality: " << nationality << std::endl;
     }
+
+    static int getAuthorCount() { // Статический метод для получения количества авторов
+        return authorCount;
+    }
 };
+
+// Инициализация статического поля
+int Author::authorCount = 0;
 
 class Book {
 private:
@@ -168,9 +180,13 @@ public:
 };
 
 int main() {
+    std::cout << "Total Authors: " << Author::getAuthorCount() << std::endl;
+
     // Создание авторов
     Author author1(1, "Л. Н. Толстой.", "Русский");
     Author author2(2, "Харуки Мураками", "Японец");
+
+    std::cout << "Total Authors: " << Author::getAuthorCount() << std::endl;
 
     // Создание книг
     Book book1(1, "Война и мир", author1, 1869);
