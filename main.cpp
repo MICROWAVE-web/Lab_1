@@ -63,7 +63,7 @@ public:
         Book combined;
         combined.title = this->title + " & " + other.title; // 5) сложение двух строк std::string
         combined.author = this->author;  // Оставляем автора 1 книги
-        combined.year = this->year + other.year; // Оставляем год выпуска 1 книги
+        combined.year = (this->year + other.year) / 2; // Для теста оставляем средний год выпуска 2-х книг
         return combined;
     }
 
@@ -113,6 +113,7 @@ public:
         std::cout << "Book ID: " << id << "\nTitle: " << title << std::endl;
         author.printAuthor();
         std::cout << "Year: " << year << std::endl;
+        std::cout << ""<< std::endl;
     }
 
     std::string getTitle() const {
@@ -231,7 +232,7 @@ int main() {
     SetConsoleOutputCP(CP_UTF8);
 
     // 1) Демонстрация возвращения через указатель и через ссылку
-    Book book1(1, "C++ Основы", Author(1, "John Doe", "США"), 2020);
+    Book book1(1, "C++ Основы", Author(1, "John Doe", "США"), 2018);
     std::string *titlePtr = book1.getTitlePointer();
     std::string &titleRef = book1.getTitleReference();
     std::cout << "Title (pointer): " << *titlePtr << "\nTitle (reference): " << titleRef << std::endl;
@@ -242,7 +243,7 @@ int main() {
     author1.printAuthor();
 
     // 3) Сравнение автора 2 книг
-    Book book2(2, "Продвинутый C++", Author(2, "John Doe", "США"), 2021);
+    Book book2(2, "Продвинутый C++", Author(2, "John Doe", "США"), 2022);
     std::cout << "Same author: " << (sameAuthor(book1, book2) ? "Yes" : "No") << std::endl;
 
     // 4) Демонстрация сложения 2 книг
