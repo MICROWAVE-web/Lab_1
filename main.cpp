@@ -2,6 +2,7 @@
 #include <string>
 #include <utility>
 #include <windows.h>
+#include <vector>
 
 class Author {
 private:
@@ -19,6 +20,11 @@ public:
     Author(int id, std::string name, std::string nationality)
             : id(id), name(std::move(name)), nationality(std::move(nationality)) {
         authorCount++;
+    }
+
+    // Деструктор
+    ~Author() {
+        authorCount--;
     }
 
     static void inputAuthor(Author &author) {
@@ -113,7 +119,7 @@ public:
         std::cout << "Book ID: " << id << "\nTitle: " << title << std::endl;
         author.printAuthor();
         std::cout << "Year: " << year << std::endl;
-        std::cout << ""<< std::endl;
+        std::cout << "" << std::endl;
     }
 
     std::string getTitle() const {
@@ -226,10 +232,88 @@ public:
     }
 };
 
+
+// возврат значения из метода через вспомогательный класс;
+class Utils {
+public:
+    // Метод для преобразования строки в верхний регистр
+    static std::string toUpperCase(const std::string &str) {
+        std::string result = str;
+        for (char &ch : result) {
+            ch = toupper(ch);
+        }
+        return result;
+    }
+
+    // Метод для подсчета книг с определенным автором
+    static int countBooksByAuthor(const std::vector<Book> &books, const std::string &authorName) {
+        int count = 0;
+        for (Book book : books) {
+            if (book.getTitlePointer() != nullptr && book.getTitleReference() == authorName) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // Метод для поиска книги по названию
+    static Book *findBookByTitle(const std::vector<Book> &books, const std::string &title) {
+        for (const Book &book : books) {
+            if (book.getTitle() == title) {
+                return new Book(book); // Возвращаем копию объекта
+            }
+        }
+        return nullptr;
+    }
+
+    // Метод для вывода всех книг
+    static void printAllBooks(const std::vector<Book> &books) {
+        for (const Book &book : books) {
+            book.printBook();
+        }
+    }
+};
+
 int main() {
     setlocale(LC_ALL, "ru-RU");
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
+
+
+    // ***** Демонстрация ПРАВКИ *****
+
+    // Создаем несколько книг
+    std::vector<Book> books = {
+            Book(1, "C++ Основы", Author(1, "John Doe", "США"), 2018),
+            Book(2, "Продвинутый C++", Author(2, "Jane Austen", "Англия"), 2022),
+            Book(3, "C++ для профессионалов", Author(1, "John Doe", "США"), 2020)
+    };
+
+    // 1. Преобразование строки в верхний регистр
+    std::string title = "C++ Основы";
+    std::cout << "Uppercase title: " << Utils::toUpperCase(title) << std::endl;
+
+    // 2. Подсчет книг определенного автора
+    int count = Utils::countBooksByAuthor(books, "John Doe");
+    std::cout << "Books by John Doe: " << count << std::endl;
+
+    // 3. Поиск книги по названию
+    Book *foundBook = Utils::findBookByTitle(books, "Продвинутый C++");
+    if (foundBook) {
+        std::cout << "Found book:\n";
+        foundBook->printBook();
+        delete foundBook; // Не забываем удалить динамически созданный объект
+    } else {
+        std::cout << "Book not found." << std::endl;
+    }
+
+    // 4. Вывод всех книг
+    std::cout << "All books:\n";
+    Utils::printAllBooks(books);
+
+    // ***** КОНЕЦ ПРАВКИ *****
+
+
 
     // 1) Демонстрация возвращения через указатель и через ссылку
     Book book1(1, "C++ Основы", Author(1, "John Doe", "США"), 2018);
