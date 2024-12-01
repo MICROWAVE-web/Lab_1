@@ -2,7 +2,9 @@
 #include <string>
 #include <utility>
 #include <windows.h>
+#include <stdexcept> // Для std::runtime_error
 #include <vector>
+#include <regex>
 
 class Author {
 private:
@@ -63,6 +65,12 @@ private:
     Author author;
     int year;
 
+    void validateYear(int y) {
+        if (y <= 0) {
+            throw std::invalid_argument("Year must be a positive number.");
+        }
+    }
+
 public:
     // Перегрузка оператора + для сложения название 2 книг
     Book operator+(const Book &other) const {
@@ -101,7 +109,15 @@ public:
 
     // Обычный с параметрами
     Book(int id, std::string title, Author author, int year)
-            : id(id), title(std::move(title)), author(std::move(author)), year(year) {}
+            : id(id), title(std::move(title)), author(std::move(author)), year(year) {
+        try {
+            validateYear(year);
+            this->year = year;
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Error in Book constructor: " << e.what() << std::endl;
+            this->year = 1; // Устанавливаем год по умолчанию
+        }
+    }
 
     static void inputBook(Book &book) {
         std::cout << "Enter Book ID: ";
@@ -109,10 +125,18 @@ public:
         std::cin.ignore();
         std::cout << "Enter Book Title: ";
         std::getline(std::cin, book.title);
-        std::cout << "Enter Author details:\n";
-        Author::inputAuthor(book.author);
-        std::cout << "Enter Year of Publication: ";
-        std::cin >> book.year;
+
+        try {
+            std::cout << "Enter Author details:\n";
+            Author::inputAuthor(book.author);
+            std::cout << "Enter Year of Publication: ";
+            std::cin >> book.year;
+
+            book.validateYear(book.year);
+        } catch (const std::exception &e) {
+            std::cerr << "Error during input: " << e.what() << "\nSetting default year to 2000." << std::endl;
+            book.year = 2000;
+        }
     }
 
     void printBook() const {
@@ -195,10 +219,51 @@ private:
     Librarian librarian;
     std::string order_date;
 
+
+    void validateOrderDate(const std::string &date) {
+        // Проверка формата YYYY-MM-DD
+        std::regex dateRegex(R"((\d{4})-(\d{2})-(\d{2}))");
+        std::smatch match;
+        if (!std::regex_match(date, match, dateRegex)) {
+            throw std::invalid_argument("Order date must be in format YYYY-MM-DD.");
+        }
+
+        // Извлечение года, месяца и дня из строки
+        int year = std::stoi(match[1].str());
+        int month = std::stoi(match[2].str());
+        int day = std::stoi(match[3].str());
+
+        // Проверка диапазона месяца
+        if (month < 1 || month > 12) {
+            throw std::invalid_argument("Month must be between 1 and 12.");
+        }
+
+        // Проверка диапазона дня
+        int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+        // Учитываем високосный год
+        bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        if (isLeapYear) {
+            daysInMonth[1] = 29; // Февраль имеет 29 дней в високосном году
+        }
+
+        if (day < 1 || day > daysInMonth[month - 1]) {
+            throw std::invalid_argument("Incorrect day. Check your calendar");
+        }
+    }
+
 public:
     Order(int id, Book book, Reader reader, Librarian librarian, std::string order_date)
-            : id(id), book(std::move(book)), reader(std::move(reader)), librarian(std::move(librarian)),
-              order_date(std::move(order_date)) {}
+            : id(id), book(std::move(book)), reader(std::move(reader)), librarian(std::move(librarian)) {
+        try {
+            validateOrderDate(order_date);
+            this->order_date = std::move(order_date);
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Error in Order constructor: " << e.what() << "\nSetting default date to 2000-01-01."
+                      << std::endl;
+            this->order_date = "2000-01-01";
+        }
+    }
 
     static void inputOrder(Order &order) {
         std::cout << "Enter Order ID: ";
@@ -212,6 +277,13 @@ public:
         Librarian::inputLibrarian(order.librarian);
         std::cout << "Enter Order Date (YYYY-MM-DD): ";
         std::getline(std::cin, order.order_date);
+        try {
+            // Валидируем дату
+            order.validateOrderDate(order.order_date);
+        } catch (const std::exception &e) {
+            std::cerr << "Error during input: " << e.what() << "\nSetting default date to 2000-01-01." << std::endl;
+            order.order_date = "2000-01-01";
+        }
     }
 
     void printOrder() const {
@@ -239,7 +311,7 @@ public:
     // Метод для преобразования строки в верхний регистр
     static std::string toUpperCase(const std::string &str) {
         std::string result = str;
-        for (char &ch : result) {
+        for (char &ch: result) {
             ch = toupper(ch);
         }
         return result;
@@ -248,7 +320,7 @@ public:
     // Метод для подсчета книг с определенным автором
     static int countBooksByAuthor(const std::vector<Book> &books, const std::string &authorName) {
         int count = 0;
-        for (Book book : books) {
+        for (Book book: books) {
             if (book.getTitlePointer() != nullptr && book.getTitleReference() == authorName) {
                 count++;
             }
@@ -258,7 +330,7 @@ public:
 
     // Метод для поиска книги по названию
     static Book *findBookByTitle(const std::vector<Book> &books, const std::string &title) {
-        for (const Book &book : books) {
+        for (const Book &book: books) {
             if (book.getTitle() == title) {
                 return new Book(book); // Возвращаем копию объекта
             }
@@ -268,7 +340,7 @@ public:
 
     // Метод для вывода всех книг
     static void printAllBooks(const std::vector<Book> &books) {
-        for (const Book &book : books) {
+        for (const Book &book: books) {
             book.printBook();
         }
     }
@@ -279,68 +351,46 @@ int main() {
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 
+    try {
+        Book book(1, "Invalid Book", Author(1, "John Doe", "США"), -2000); // Год некорректный
+        book.printBook();
 
-    // ***** Демонстрация ПРАВКИ *****
-
-    // Создаем несколько книг
-    std::vector<Book> books = {
-            Book(1, "C++ Основы", Author(1, "John Doe", "США"), 2018),
-            Book(2, "Продвинутый C++", Author(2, "Jane Austen", "Англия"), 2022),
-            Book(3, "C++ для профессионалов", Author(1, "John Doe", "США"), 2020)
-    };
-
-    // 1. Преобразование строки в верхний регистр
-    std::string title = "C++ Основы";
-    std::cout << "Uppercase title: " << Utils::toUpperCase(title) << std::endl;
-
-    // 2. Подсчет книг определенного автора
-    int count = Utils::countBooksByAuthor(books, "John Doe");
-    std::cout << "Books by John Doe: " << count << std::endl;
-
-    // 3. Поиск книги по названию
-    Book *foundBook = Utils::findBookByTitle(books, "Продвинутый C++");
-    if (foundBook) {
-        std::cout << "Found book:\n";
-        foundBook->printBook();
-        delete foundBook; // Не забываем удалить динамически созданный объект
-    } else {
-        std::cout << "Book not found." << std::endl;
+        Order order(1, book, Reader(1, "Вася", "Булочная, д. 12"), Librarian(1, "Ольга Петровна", "Зам"), "2023-13-01"); // Некорректная дата
+        order.printOrder();
+    } catch (const std::exception &e) {
+        std::cerr << "Exception caught in main: " << e.what() << std::endl;
     }
 
-    // 4. Вывод всех книг
-    std::cout << "All books:\n";
-    Utils::printAllBooks(books);
+    std::cout << "\nОдномерный массив книг" << std::endl;
+    // Создаем массив авторов (одномерный)
+    const int AUTHOR_COUNT = 3;
+    Author authors[AUTHOR_COUNT] = {
+            Author(1, "Author A", "Country A"),
+            Author(2, "Author B", "Country B"),
+            Author(3, "Author C", "Country C")
+    };
 
-    // ***** КОНЕЦ ПРАВКИ *****
+    std::cout << "\nAuthors array:\n";
+    for (int i = 0; i < AUTHOR_COUNT; i++) {
+        authors[i].printAuthor();
+    }
 
+    std::cout << "\nДвумерный массив книг" << std::endl;
+    // Создаем двумерный массив книг
+    const int ROWS = 2;
+    const int COLS = 2;
+    Book bookGrid[ROWS][COLS] = {
+            {Book(1, "Book 1", authors[0], 2000), Book(2, "Book 2", authors[1], 2005)},
+            {Book(3, "Book 3", authors[2], 2010), Book(4, "Book 4", authors[0], 2015)}
+    };
 
-
-    // 1) Демонстрация возвращения через указатель и через ссылку
-    Book book1(1, "C++ Основы", Author(1, "John Doe", "США"), 2018);
-    std::string *titlePtr = book1.getTitlePointer();
-    std::string &titleRef = book1.getTitleReference();
-    std::cout << "Title (pointer): " << *titlePtr << "\nTitle (reference): " << titleRef << std::endl;
-
-    // 2) Демонстрация использования оператора this
-    Author author1;
-    author1.setName("Jane Doe").setName("Jane Austen");
-    author1.printAuthor();
-
-    // 3) Сравнение автора 2 книг
-    Book book2(2, "Продвинутый C++", Author(2, "John Doe", "США"), 2022);
-    std::cout << "Same author: " << (sameAuthor(book1, book2) ? "Yes" : "No") << std::endl;
-
-    // 4) Демонстрация сложения 2 книг
-    Book combinedBook = book1 + book2;
-    combinedBook.printBook();
-
-    // Префиксный оператор увеличения ++
-    ++book1;
-    book1.printBook();
-
-    // Постфиксный оператор увеличения ++
-    book1++;
-    book1.printBook();
+    std::cout << "\nBooks grid:\n";
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
+            std::cout << "Book [" << i << "][" << j << "]:" << std::endl;
+            bookGrid[i][j].printBook();
+        }
+    }
 
     return 0;
 }
