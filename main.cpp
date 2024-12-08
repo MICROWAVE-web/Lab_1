@@ -6,8 +6,16 @@
 #include <vector>
 #include <regex>
 
-class Author {
-private:
+// Абстрактный класс
+class LibraryEntity {
+public:
+    virtual void printEntity() const = 0; // Чисто виртуальная функция
+    virtual ~LibraryEntity() = default;
+};
+
+// Базовый класс Author
+class Author : public LibraryEntity {
+protected:
     int id;
     std::string nationality;
     static int authorCount; // Статическое поле для подсчета авторов
@@ -25,7 +33,7 @@ public:
     }
 
     // Деструктор
-    ~Author() {
+    ~Author() override {
         authorCount--;
     }
 
@@ -39,7 +47,7 @@ public:
         std::getline(std::cin, author.nationality);
     }
 
-    void printAuthor() const {
+    virtual void printAuthor() const {
         std::cout << "Author ID: " << id << "\nName: " << name << "\nNationality: " << nationality << std::endl;
     }
 
@@ -52,11 +60,54 @@ public:
         return *this;
     }
 
+    Author &operator=(const Author &other) {
+        if (this != &other) {
+            id = other.id;
+            name = other.name;
+            nationality = other.nationality;
+        }
+        return *this;
+    }
+
+    virtual std::string getDetails() const {
+        return "Author: " + name + ", Nationality: " + nationality;
+    }
+
+    void printEntity() const override {
+        printAuthor();
+    }
 
 };
 
 // Инициализация статического поля
 int Author::authorCount = 0;
+
+// Производный класс SpecialAuthor
+class SpecialAuthor : public Author {
+private:
+    std::string award;
+
+public:
+    SpecialAuthor(int id, const std::string &name, const std::string &nationality, std::string award)
+            : Author(id, name, nationality), award(std::move(award)) {}
+
+    void printAuthor() const override {
+        Author::printAuthor(); // Вызов метода базового класса
+        std::cout << "Award: " << award << std::endl;
+    }
+
+    std::string getDetails() const override {
+        return Author::getDetails() + ", Award: " + award;
+    }
+
+    SpecialAuthor &operator=(const Author &other) {
+        if (this != &other) {
+            Author::operator=(other); // Присваиваем базовую часть
+            award = "No Award"; // Специфическое значение для производного
+        }
+        return *this;
+    }
+};
 
 class Book {
 private:
@@ -157,7 +208,7 @@ bool sameAuthor(const Book &b1, const Book &b2) { // Дружественная 
     return b1.author.name == b2.author.name;
 }
 
-class Reader {
+class Reader : public LibraryEntity {
 private:
     int id;
     std::string name;
@@ -184,9 +235,14 @@ public:
     std::string getName() const {
         return name;
     }
+
+    // Реализация чисто виртуальной функции из LibraryEntity
+    void printEntity() const override {
+        printReader(); // Можно просто вызвать существующую функцию
+    }
 };
 
-class Librarian {
+class Librarian : public LibraryEntity {
 private:
     int id;
     std::string name;
@@ -209,14 +265,19 @@ public:
     void printLibrarian() const {
         std::cout << "Librarian ID: " << id << "\nName: " << name << "\nPosition: " << position << std::endl;
     }
+
+    // Реализация чисто виртуальной функции из LibraryEntity
+    void printEntity() const override {
+        printLibrarian(); // Можно просто вызвать существующую функцию
+    }
 };
 
 class Order {
 private:
     int id;
     Book book;
-    Reader reader;
-    Librarian librarian;
+    Reader reader; // Фикс, сделать указатель на абстрактную функцию
+    Librarian librarian; // Фикс, сделать указатель на абстрактную функцию
     std::string order_date;
 
 
@@ -253,8 +314,8 @@ private:
     }
 
 public:
-    Order(int id, Book book, Reader reader, Librarian librarian, std::string order_date)
-            : id(id), book(std::move(book)), reader(std::move(reader)), librarian(std::move(librarian)) {
+    Order(int id, Book book, Reader *reader, Librarian *librarian, std::string order_date)
+            : id(id), book(std::move(book)), reader(*reader), librarian(*librarian) {
         try {
             validateOrderDate(order_date);
             this->order_date = std::move(order_date);
@@ -272,9 +333,9 @@ public:
         std::cout << "Enter Book details:\n";
         Book::inputBook(order.book);
         std::cout << "Enter Reader details:\n";
-        Reader::inputReader(order.reader);
+        Reader::inputReader(reinterpret_cast<Reader &>(order.reader));
         std::cout << "Enter Librarian details:\n";
-        Librarian::inputLibrarian(order.librarian);
+        Librarian::inputLibrarian(reinterpret_cast<Librarian &>(order.librarian));
         std::cout << "Enter Order Date (YYYY-MM-DD): ";
         std::getline(std::cin, order.order_date);
         try {
@@ -346,51 +407,55 @@ public:
     }
 };
 
+// Шаблон класса
+template<typename T>
+class LibraryContainer {
+private:
+    std::vector<T> items;
+
+public:
+    void addItem(const T &item) {
+        items.push_back(item);
+    }
+
+    void printAllItems() const {
+        for (const auto &item: items) {
+            item.printEntity();
+            std::cout << "" << std::endl;
+        }
+    }
+};
+
 int main() {
     setlocale(LC_ALL, "ru-RU");
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 
-    try {
-        Book book(1, "Invalid Book", Author(1, "John Doe", "США"), -2000); // Год некорректный
-        book.printBook();
+    Author author1(1, "John Doe", "USA");
+    SpecialAuthor author2(2, "Jane Smith", "UK", "Nobel Prize");
 
-        Order order(1, book, Reader(1, "Вася", "Булочная, д. 12"), Librarian(1, "Ольга Петровна", "Зам"), "2023-13-01"); // Некорректная дата
-        order.printOrder();
-    } catch (const std::exception &e) {
-        std::cerr << "Exception caught in main: " << e.what() << std::endl;
-    }
+    std::cout << "Базовый автор:" << std::endl;
+    author1.printAuthor();
 
-    std::cout << "\nОдномерный массив книг" << std::endl;
-    // Создаем массив авторов (одномерный)
-    const int AUTHOR_COUNT = 3;
-    Author authors[AUTHOR_COUNT] = {
-            Author(1, "Author A", "Country A"),
-            Author(2, "Author B", "Country B"),
-            Author(3, "Author C", "Country C")
-    };
+    std::cout << "\nОсобый автор:" << std::endl;
+    author2.printAuthor();
 
-    std::cout << "\nAuthors array:\n";
-    for (int i = 0; i < AUTHOR_COUNT; i++) {
-        authors[i].printAuthor();
-    }
+    // Перегрузка оператора присваивания
+    std::cout << "\nРезультат присваивания:" << std::endl;
+    author2 = author1;
+    author2.printAuthor();
 
-    std::cout << "\nДвумерный массив книг" << std::endl;
-    // Создаем двумерный массив книг
-    const int ROWS = 2;
-    const int COLS = 2;
-    Book bookGrid[ROWS][COLS] = {
-            {Book(1, "Book 1", authors[0], 2000), Book(2, "Book 2", authors[1], 2005)},
-            {Book(3, "Book 3", authors[2], 2010), Book(4, "Book 4", authors[0], 2015)}
-    };
+    // Демонстрация виртуальных функций
+    Author *basePtr = &author2;
+    std::cout << "\nДетали из базового указателя: " << basePtr->getDetails() << std::endl;
 
-    std::cout << "\nBooks grid:\n";
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLS; j++) {
-            std::cout << "Book [" << i << "][" << j << "]:" << std::endl;
-            bookGrid[i][j].printBook();
-        }
-    }
+    // Шаблонный класс
+    LibraryContainer<Author> library;
+    library.addItem(author1);
+    library.addItem(author2);
+
+    std::cout << "\nБиблиотека:" << std::endl;
+    library.printAllItems();
 
     return 0;
 }
