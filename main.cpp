@@ -5,11 +5,14 @@
 #include <stdexcept> // Для std::runtime_error
 #include <vector>
 #include <regex>
+#include <memory>
+#include <algorithm>
 
-// Абстрактный класс
+// Базовый класс
 class LibraryEntity {
 public:
-    virtual void printEntity() const = 0; // Чисто виртуальная функция
+    virtual void printEntity() const = 0;
+    virtual std::string getName() const = 0; // Для сортировки и поиска
     virtual ~LibraryEntity() = default;
 };
 
@@ -22,6 +25,8 @@ protected:
 
 public:
     std::string name; // Сделаем поле name публичным
+
+    std::string getName() const { return name; }
 
     Author() : id(0), name(""), nationality("") {
         authorCount++;
@@ -252,6 +257,8 @@ public:
     Librarian(int id, std::string name, std::string position)
             : id(id), name(std::move(name)), position(std::move(position)) {}
 
+    std::string getName() const { return name; }
+
     static void inputLibrarian(Librarian &librarian) {
         std::cout << "Enter Librarian ID: ";
         std::cin >> librarian.id;
@@ -426,36 +433,63 @@ public:
     }
 };
 
+// Функция пузырьковой сортировки
+void bubbleSort(std::vector<std::shared_ptr<LibraryEntity>> &entities) {
+    size_t n = entities.size();
+    for (size_t i = 0; i < n - 1; ++i) {
+        for (size_t j = 0; j < n - i - 1; ++j) {
+            if (entities[j]->getName() > entities[j + 1]->getName()) {
+                std::swap(entities[j], entities[j + 1]);
+            }
+        }
+    }
+}
+
 int main() {
     setlocale(LC_ALL, "ru-RU");
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 
-    Author author1(1, "John Doe", "USA");
-    SpecialAuthor author2(2, "Jane Smith", "UK", "Nobel Prize");
 
-    std::cout << "Базовый автор:" << std::endl;
-    author1.printAuthor();
+    // Контейнер для объектов базового и производного классов
+    std::vector<std::shared_ptr<LibraryEntity>> libraryEntities;
 
-    std::cout << "\nОсобый автор:" << std::endl;
-    author2.printAuthor();
+    // Добавляем читателей и библиотекарей
+    libraryEntities.push_back(std::make_shared<Reader>(1, "Вася", "г. Барнаул, ул. Гагарина, дом 6"));
+    libraryEntities.push_back(std::make_shared<Librarian>(2, "Ольга", "директор"));
+    libraryEntities.push_back(std::make_shared<Reader>(3, "Петр", "г. Саратов, ул. Ленина, дом 52"));
+    libraryEntities.push_back(std::make_shared<Librarian>(4, "Иван", "зам директора"));
 
-    // Перегрузка оператора присваивания
-    std::cout << "\nРезультат присваивания:" << std::endl;
-    author2 = author1;
-    author2.printAuthor();
+    // Вывод исходного списка
+    std::cout << "Вывод исходного списка:\n";
+    for (const auto &entity: libraryEntities) {
+        entity->printEntity();
+    }
 
-    // Демонстрация виртуальных функций
-    Author *basePtr = &author2;
-    std::cout << "\nДетали из базового указателя: " << basePtr->getDetails() << std::endl;
+    // Сортировка списка по имени
+    bubbleSort(libraryEntities);
 
-    // Шаблонный класс
-    LibraryContainer<Author> library;
-    library.addItem(author1);
-    library.addItem(author2);
+    // Вывод отсортированного списка
+    std::cout << "\nВывод отсортированного списка:\n";
+    for (const auto &entity: libraryEntities) {
+        entity->printEntity();
+    }
 
-    std::cout << "\nБиблиотека:" << std::endl;
-    library.printAllItems();
+    // Поиск объекта по имени
+    std::string targetName = "Петр";
+    std::cout << "\nПоиск объекта по имени «" << targetName << "»" << std::endl;
+    auto it = std::find_if(libraryEntities.begin(), libraryEntities.end(),
+       [&targetName](const std::shared_ptr<LibraryEntity> &entity) {
+           return entity->getName() == targetName;
+       });
+
+    // Вывод результата поиска
+    if (it != libraryEntities.end()) {
+        std::cout << "Найденные объекты:\n";
+        (*it)->printEntity();
+    } else {
+        std::cout << "\nОбъект " << targetName << " не найден.\n";
+    }
 
     return 0;
 }
